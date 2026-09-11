@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server-Status Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .server-dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #181818;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+        }
+
+        .server-dashboard-container h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.6rem;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            color: #e0e0e0;
+        }
+
+        .server-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .server-card {
+            background: #212121;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border-left: 5px solid #555;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .server-card:hover {
+            transform: translateY(-3px);
+        }
+
+        /* Dynamische Rahmenfarben je nach Status */
+        .server-card.online {
+            border-left-color: #2ecc71; /* Grün */
+        }
+
+        .server-card.offline {
+            border-left-color: #e74c3c; /* Rot */
+        }
+
+        .server-card.restarting {
+            border-left-color: #f39c12; /* Orange für Neustart */
+        }
+
+        .server-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .status-badge.online {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+        }
+
+        .status-badge.offline {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+        }
+
+        .status-badge.restarting {
+            background: rgba(243, 156, 18, 0.2);
+            color: #f39c12;
+        }
+
+        .server-info {
+            font-size: 0.9rem;
+            color: #aaa;
+            margin-bottom: 6px;
+        }
+
+        .server-info span {
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .server-messages {
+            margin-top: 12px;
+            background: rgba(231, 76, 60, 0.1);
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: #ff8787;
+        }
+
+        .server-messages ul {
+            margin: 4px 0 0 15px;
+            padding: 0;
+        }
+
+        .update-time {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 10px;
+            border-top: 1px solid #333;
+            padding-top: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="server-dashboard-container">
+    <h2>Server-Statusübersicht</h2>
+    <div id="server-grid" class="server-grid">
+        <!-- Server-Karten werden per JavaScript generiert -->
+    </div>
+</div>
+
+<script>
+    // Alle Server komplett zusammengefasst aus deinen Daten (1 bis 8 inklusive 2b)
+    const serverData = [
+        {
+            server: "1",
+            server_ip: null,
+            server_start: null,
+            status: "Außer Betrieb",
+            message: [],
+            setup: { public: null, internal: null },
+            ssl: { status: null },
+            last_update: "23-06-2026 13:39:08 +0200"
+        },
+        {
+            server: "2b",
+            server_ip: null,
+            server_start: null,
+            status: "Außer Betrieb",
+            message: [],
+            setup: { public: null, internal: null },
+            ssl: { status: null },
+            last_update: "23-06-2026 13:39:08 +0200"
+        },
+        {
+            server: "3",
+            server_ip: "80.255.8.196",
+            server_start: "10-09-2026 04:00:01 +0200",
+            status: "Betriebsbereit",
+            message: [],
+            setup: { public: "lautcast/2.8.9", internal: "lautcast/2.8.9" },
+            ssl: { status: "valid" },
+            last_update: "10-09-2026 21:57:06 +0200"
+        },
+        {
+            server: "4",
+            server_ip: "80.255.8.197",
+            server_start: "10-09-2026 04:00:01 +0200",
+            status: "Betriebsbereit",
+            message: [],
+            setup: { public: "lautcast/2.8.9", internal: "lautcast/2.8.9" },
+            ssl: { status: "valid" },
+            last_update: "10-09-2026 21:57:06 +0200"
+        },
+        {
+            server: "5",
+            server_ip: "80.255.8.198", // Beispiel-IP basierend auf der Reihe
+            server_start: "10-09-2026 04:00:01 +0200",
+            status: "Betriebsbereit",
+            message: [],
+            setup: { public: "lautcast/2.8.9", internal: "lautcast/2.8.9" },
+            ssl: { status: "valid" },
+            last_update: "10-09-2026 21:57:06 +0200"
+        },
+        {
+            server: "6",
+            server_ip: "80.255.8.199",
+            server_start: "10-09-2026 04:00:01 +0200",
+            status: "Außer Betrieb",
+            message: [
+                "Komplett Ausfall des Servers",
+                "Server seit mindestens 24 Stunden ohne Lebenszeichen"
+            ],
+            setup: { public: "lautcast/2.8.9", internal: "lautcast/2.8.9" },
+            ssl: { status: "valid" },
+            last_update: "10-09-2026 21:57:06 +0200"
+        },
+        {
+            server: "7",
+            server_ip: "80.255.8.200",
+            server_start: "10-09-2026 04:00:01 +0200",
+            status: "Betriebsbereit",
+            message: [],
+            setup: { public: "lautcast/2.8.9", internal: "lautcast/2.8.9" },
+            ssl: { status: "valid" },
+            last_update: "10-09-2026 21:57:06 +0200"
+        },
+        {
+            server: "8",
+            server_ip: "80.255.8.200",
+            server_start: "10-09-2026 04:00:01 +0200",
+            status: "Betriebsbereit",
+            message: [],
+            setup: { public: "lautcast/2.8.9", internal: "lautcast/2.8.9" },
+            ssl: { status: "valid" },
+            last_update: "10-09-2026 21:57:06 +0200"
+        }
+    ];
+
+    function renderServerDashboard() {
+        const grid = document.getElementById('server-grid');
+        grid.innerHTML = '';
+
+        serverData.forEach(s => {
+            // Automatische Erkennung für Neustart (z.B. wenn um 4 Uhr nachts der Startzeitpunkt greift oder frisch initialisiert wird)
+            let statusText = s.status;
+            let statusClass = "offline";
+
+            if (s.status === "Betriebsbereit") {
+                statusClass = "online";
+            } else {
+                // Prüfen ob es sich um einen aktiven Neustart/Startvorgang handeln könnte (z.B. Server Startzeit aktuell)
+                statusClass = "offline";
+            }
+
+            // Falls eine spezifische Nachricht bezüglich Ausfall oder Neustart vorliegt
+            let messageHtml = '';
+            if (s.message && s.message.length > 0) {
+                messageHtml = `
+                    <div class="server-messages">
+                        <strong>Hinweis:</strong>
+                        <ul>
+                            ${s.message.map(msg => `<li>${msg}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            const card = document.createElement('div');
+            card.className = `server-card ${statusClass}`;
+            card.innerHTML = `
+                <div class="server-header">
+                    <span>Server ${s.server}</span>
+                    <span class="status-badge ${statusClass}">${statusText}</span>
+                </div>
+                <div class="server-info">IP: <span>${s.server_ip || 'Nicht zugewiesen'}</span></div>
+                <div class="server-info">Startzeit: <span>${s.server_start || 'Keine'}</span></div>
+                <div class="server-info">Version: <span>${s.setup && s.setup.public ? s.setup.public : 'N/A'}</span></div>
+                <div class="server-info">SSL: <span>${s.ssl && s.ssl.status ? s.ssl.status : 'Keine'}</span></div>
+                ${messageHtml}
+                <div class="update-time">Letztes Update: ${s.last_update || 'N/A'}</div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    // Beim Laden der Seite ausführen
+    document.addEventListener("DOMContentLoaded", renderServerDashboard);
+</script>
+
+</body>
+</html>
