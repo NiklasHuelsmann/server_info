@@ -192,26 +192,23 @@
 
 <script>
     const API_URL = "https://api.tools.paeddy.de/server_info";
-    let previousServerStates = {}; // Speichert den vorherigen Zustand für den Diff-Vergleich
+    let previousServerStates = {};
 
     function logHistory(text) {
         const historyList = document.getElementById('history-list');
-        // Falls Standard-Text drin steht, diesen beim ersten Eintrag löschen
         if (historyList.children.length === 1 && historyList.children[0].innerText.includes("Noch keine Änderungen")) {
             historyList.innerHTML = "";
         }
         const timeString = new Date().toLocaleTimeString();
         const li = document.createElement('li');
         li.innerHTML = `[${timeString}] ${text}`;
-        historyList.prepend(li); // Neueste Einträge oben
+        historyList.prepend(li);
     }
 
     async function fetchServerData() {
         const apiStatusEl = document.getElementById('api-status');
         
         try {
-            // Hinweis: Falls die API von paeds Tool standardmäßig blockiert, falls CORS aktiv ist, 
-            // läuft hier ein direkter fetch-Aufruf. Sollte ein CORS-Fehler auftreten, greift das Catch-Safety-Netz.
             const response = await fetch(API_URL);
             
             if (!response.ok) {
@@ -226,38 +223,35 @@
 
         } catch (error) {
             console.warn("API-Abruf fehlgeschlagen oder blockiert:", error);
-            // SICHERHEITSVORGABE: Bei Timeout/API-Fehler darf der bisherige Status NICHT als Ausfall interpretiert werden!
             apiStatusEl.innerText = "API-Verbindungsfehler – Behalte alten Status bei";
             apiStatusEl.style.color = "#e74c3c";
-            // Wir tun hier absichtlich nichts an den Server-Daten, damit die Anzeige stabil bleibt.
         }
     }
 
     function renderServers(data) {
         const listContainer = document.getElementById('server-list');
-        
-        // Die API liefert die Daten oft als Objekt (mit Schlüsseln "0", "1", "2" usw.) oder als Array. 
-        // Wir wandeln es sicher in ein Array um:
         const serversArray = Array.isArray(data) ? data : Object.values(data);
 
-        // Falls das erste Mal Daten geladen werden, Container leeren
         listContainer.innerHTML = '';
 
         serversArray.forEach(s => {
-            const serverId = s.server || "Unbekannt";
+            const serverId = s.server;
+
+            // FILTER: Ignoriere Einträge, die keine echte Servernummer haben oder als "unbekannt" reinkommen
+            if (!serverId || serverId === "null" || serverId === "undefined") {
+                return;
+            }
+
             const isOnline = s.status === "Betriebsbereit";
             const statusClass = isOnline ? "online" : "offline";
 
-            // Historie-Vergleich (Änderungen erkennen)
             if (previousServerStates[serverId]) {
                 const old = previousServerStates[serverId];
                 
-                // Status-Wechsel (z.B. Ausfall oder Neustart)
                 if (old.status !== s.status) {
                     logHistory(`Server <span>${serverId}</span> Status geändert: <s>${old.status}</s> ➔ <b>${s.status}</b>`);
                 }
                 
-                // lautcast Versions-Wechsel
                 const oldVersion = old.setup?.public || "N/A";
                 const newVersion = s.setup?.public || "N/A";
                 if (oldVersion !== newVersion) {
@@ -265,10 +259,8 @@
                 }
             }
 
-            // Zustand für den nächsten Intervall-Durchlauf sichern
             previousServerStates[serverId] = JSON.parse(JSON.stringify(s));
 
-            // Fehlermeldungen aufbereiten
             let errorHtml = '';
             if (s.message && s.message.length > 0) {
                 errorHtml = `
@@ -305,10 +297,8 @@
         });
     }
 
-    // Beim Laden der Seite sofort einmal abrufen
     document.addEventListener("DOMContentLoaded", () => {
         fetchServerData();
-        // Danach automatisch alle 60 Sekunden (60000 Millisekunden) aktualisieren
         setInterval(fetchServerData, 60000);
     });
 </script>
