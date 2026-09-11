@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Paddys Tool - Server Status</title>
+    <title>Live Server Status Dashboard</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -13,22 +13,36 @@
             padding: 20px;
         }
 
-        .paddy-container {
-            max-width: 900px;
+        .server-container {
+            width: 100%;
+            max-width: 1400px;
             margin: 0 auto;
             background-color: #1a1a1a;
-            padding: 20px;
+            padding: 25px;
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.6);
             border: 1px solid #333;
+            box-sizing: border-box;
         }
 
-        .paddy-container h2 {
-            margin-top: 0;
-            font-size: 1.4rem;
+        .header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             border-bottom: 2px solid #444;
-            padding-bottom: 10px;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+
+        .server-container h2 {
+            margin: 0;
+            font-size: 1.5rem;
             color: #fff;
+        }
+
+        #api-status {
+            font-size: 0.85rem;
+            color: #888;
         }
 
         .server-list {
@@ -40,15 +54,15 @@
         .server-row {
             background: #242424;
             border-radius: 6px;
-            padding: 12px 15px;
-            border-left: 5px solid #555;
+            padding: 15px 20px;
+            border-left: 6px solid #555;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: border-left-color 0.3s ease;
         }
 
-        /* Status-Farben für den linken Rand */
         .server-row.online {
             border-left-color: #2ecc71; /* Grün */
         }
@@ -67,20 +81,14 @@
 
         .server-name {
             font-weight: bold;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             color: #fff;
         }
 
-        .server-ip {
-            color: #aaa;
-            font-family: monospace;
-            font-size: 0.95rem;
-        }
-
         .badge {
-            font-size: 0.75rem;
-            padding: 3px 8px;
-            border-radius: 10px;
+            font-size: 0.8rem;
+            padding: 4px 10px;
+            border-radius: 12px;
             text-transform: uppercase;
             font-weight: bold;
         }
@@ -97,167 +105,199 @@
 
         .server-details {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 6px;
-            font-size: 0.85rem;
-            color: #bbb;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px;
+            font-size: 0.9rem;
+            color: #aaa;
             border-top: 1px solid #333;
-            padding-top: 6px;
+            padding-top: 8px;
         }
 
         .server-details span {
             color: #fff;
+            font-weight: 500;
         }
 
         .server-error-box {
             background: rgba(231, 76, 60, 0.15);
             border: 1px solid rgba(231, 76, 60, 0.4);
-            padding: 6px 10px;
+            padding: 8px 12px;
             border-radius: 4px;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             color: #ff8787;
             margin-top: 4px;
         }
 
         .server-error-box ul {
-            margin: 2px 0 0 15px;
+            margin: 4px 0 0 15px;
             padding: 0;
+        }
+
+        /* Historie-Bereich */
+        .history-section {
+            margin-top: 30px;
+            background: #202020;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #333;
+        }
+
+        .history-section h3 {
+            margin-top: 0;
+            font-size: 1.1rem;
+            color: #ccc;
+            border-bottom: 1px solid #444;
+            padding-bottom: 8px;
+        }
+
+        #history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+
+        #history-list li {
+            padding: 4px 0;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        #history-list li span {
+            color: #fff;
         }
     </style>
 </head>
 <body>
 
-<div class="paddy-container">
-    <h2>Server Status (Paddys Tool Stil)</h2>
+<div class="server-container">
+    <div class="header-flex">
+        <h2>Live Server Statusübersicht</h2>
+        <span id="api-status">Verbinde mit API...</span>
+    </div>
+    
     <div id="server-list" class="server-list">
-        <!-- Server werden hier per JavaScript untereinander eingefügt -->
+        <!-- Server werden hier dynamisch geladen -->
+    </div>
+
+    <div class="history-section">
+        <h3>Änderungs-Historie (Live-Session)</h3>
+        <ul id="history-list">
+            <li>Noch keine Änderungen in dieser Session erfasst.</li>
+        </ul>
     </div>
 </div>
 
 <script>
-    // Server-Daten (komplett von Server 1 bis 8 inklusive 2b)
-    const serverData = [
-        {
-            server: "1",
-            server_ip: "Nicht zugewiesen",
-            server_start: "Ke Angaben",
-            status: "Außer Betrieb",
-            messages: [],
-            setup: { public: "N/A" },
-            ssl: { status: "Keine", expire_date: "N/A" },
-            last_update: "23-06-2026 13:39"
-        },
-        {
-            server: "2b",
-            server_ip: "Nicht zugewiesen",
-            server_start: "Keine Angabe",
-            status: "Außer Betrieb",
-            messages: [],
-            setup: { public: "N/A" },
-            ssl: { status: "Keine", expire_date: "N/A" },
-            last_update: "23-06-2026 13:39"
-        },
-        {
-            server: "3",
-            server_ip: "80.255.8.196",
-            server_start: "10-09-2026 04:00:01",
-            status: "Betriebsbereit",
-            messages: [],
-            setup: { public: "lautcast/2.8.9" },
-            ssl: { status: "valid", expire_date: "09-10-2026 13:51" },
-            last_update: "10-09-2026 21:57"
-        },
-        {
-            server: "4",
-            server_ip: "80.255.8.197",
-            server_start: "10-09-2026 04:00:01",
-            status: "Betriebsbereit",
-            messages: [],
-            setup: { public: "lautcast/2.8.9" },
-            ssl: { status: "valid", expire_date: "09-10-2026 13:51" },
-            last_update: "10-09-2026 21:57"
-        },
-        {
-            server: "5",
-            server_ip: "80.255.8.198",
-            server_start: "10-09-2026 04:00:01",
-            status: "Betriebsbereit",
-            messages: [],
-            setup: { public: "lautcast/2.8.9" },
-            ssl: { status: "valid", expire_date: "09-10-2026 13:51" },
-            last_update: "10-09-2026 21:57"
-        },
-        {
-            server: "6",
-            server_ip: "80.255.8.199",
-            server_start: "10-09-2026 04:00:01",
-            status: "Außer Betrieb",
-            messages: [
-                "Komplett Ausfall des Servers",
-                "Server seit mindestens 24 Stunden ohne Lebenszeichen"
-            ],
-            setup: { public: "lautcast/2.8.9" },
-            ssl: { status: "valid", expire_date: "09-10-2026 13:51" },
-            last_update: "10-09-2026 21:57"
-        },
-        {
-            server: "7",
-            server_ip: "80.255.8.200",
-            server_start: "10-09-2026 04:00:01",
-            status: "Betriebsbereit",
-            messages: [],
-            setup: { public: "lautcast/2.8.9" },
-            ssl: { status: "valid", expire_date: "09-10-2026 13:51" },
-            last_update: "10-09-2026 21:57"
-        },
-        {
-            server: "8",
-            server_ip: "80.255.8.200",
-            server_start: "10-09-2026 04:00:01",
-            status: "Betriebsbereit",
-            messages: [],
-            setup: { public: "lautcast/2.8.9" },
-            ssl: { status: "valid", expire_date: "09-10-2026 13:51" },
-            last_update: "10-09-2026 21:57"
-        }
-    ];
+    const API_URL = "https://api.tools.paeddy.de/server_info";
+    let previousServerStates = {}; // Speichert den vorherigen Zustand für den Diff-Vergleich
 
-    function renderPaddyStyle() {
+    function logHistory(text) {
+        const historyList = document.getElementById('history-list');
+        // Falls Standard-Text drin steht, diesen beim ersten Eintrag löschen
+        if (historyList.children.length === 1 && historyList.children[0].innerText.includes("Noch keine Änderungen")) {
+            historyList.innerHTML = "";
+        }
+        const timeString = new Date().toLocaleTimeString();
+        const li = document.createElement('li');
+        li.innerHTML = `[${timeString}] ${text}`;
+        historyList.prepend(li); // Neueste Einträge oben
+    }
+
+    async function fetchServerData() {
+        const apiStatusEl = document.getElementById('api-status');
+        
+        try {
+            // Hinweis: Falls die API von paeds Tool standardmäßig blockiert, falls CORS aktiv ist, 
+            // läuft hier ein direkter fetch-Aufruf. Sollte ein CORS-Fehler auftreten, greift das Catch-Safety-Netz.
+            const response = await fetch(API_URL);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP-Fehler! Status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            apiStatusEl.innerText = "Status: Verbunden (Live)";
+            apiStatusEl.style.color = "#2ecc71";
+
+            renderServers(data);
+
+        } catch (error) {
+            console.warn("API-Abruf fehlgeschlagen oder blockiert:", error);
+            // SICHERHEITSVORGABE: Bei Timeout/API-Fehler darf der bisherige Status NICHT als Ausfall interpretiert werden!
+            apiStatusEl.innerText = "API-Verbindungsfehler – Behalte alten Status bei";
+            apiStatusEl.style.color = "#e74c3c";
+            // Wir tun hier absichtlich nichts an den Server-Daten, damit die Anzeige stabil bleibt.
+        }
+    }
+
+    function renderServers(data) {
         const listContainer = document.getElementById('server-list');
+        
+        // Die API liefert die Daten oft als Objekt (mit Schlüsseln "0", "1", "2" usw.) oder als Array. 
+        // Wir wandeln es sicher in ein Array um:
+        const serversArray = Array.isArray(data) ? data : Object.values(data);
+
+        // Falls das erste Mal Daten geladen werden, Container leeren
         listContainer.innerHTML = '';
 
-        serverData.forEach(s => {
+        serversArray.forEach(s => {
+            const serverId = s.server || "Unbekannt";
             const isOnline = s.status === "Betriebsbereit";
             const statusClass = isOnline ? "online" : "offline";
 
-            // Fehlerbox generieren, falls vorhanden
+            // Historie-Vergleich (Änderungen erkennen)
+            if (previousServerStates[serverId]) {
+                const old = previousServerStates[serverId];
+                
+                // Status-Wechsel (z.B. Ausfall oder Neustart)
+                if (old.status !== s.status) {
+                    logHistory(`Server <span>${serverId}</span> Status geändert: <s>${old.status}</s> ➔ <b>${s.status}</b>`);
+                }
+                
+                // lautcast Versions-Wechsel
+                const oldVersion = old.setup?.public || "N/A";
+                const newVersion = s.setup?.public || "N/A";
+                if (oldVersion !== newVersion) {
+                    logHistory(`Server <span>${serverId}</span> Version aktualisiert: <s>${oldVersion}</s> ➔ <b>${newVersion}</b>`);
+                }
+            }
+
+            // Zustand für den nächsten Intervall-Durchlauf sichern
+            previousServerStates[serverId] = JSON.parse(JSON.stringify(s));
+
+            // Fehlermeldungen aufbereiten
             let errorHtml = '';
-            if (s.messages && s.messages.length > 0) {
+            if (s.message && s.message.length > 0) {
                 errorHtml = `
                     <div class="server-error-box">
-                        <strong>Fehlermeldung:</strong>
+                        <strong>Meldung:</strong>
                         <ul>
-                            ${s.messages.map(m => `<li>${m}</li>`).join('')}
+                            ${s.message.map(m => `<li>${m}</li>`).join('')}
                         </ul>
                     </div>
                 `;
             }
 
+            const publicVersion = s.setup && s.setup.public ? s.setup.public : "N/A";
+            const expireDate = s.ssl && s.ssl.expire_date ? s.ssl.expire_date : "N/A";
+            const serverStart = s.server_start ? s.server_start : "Keine Angabe";
+            const lastUpdate = s.last_update ? s.last_update : "N/A";
+
             const row = document.createElement('div');
             row.className = `server-row ${statusClass}`;
             row.innerHTML = `
                 <div class="server-top-info">
-                    <div>
-                        <span class="server-name">Server ${s.server}</span>
-                        <span class="server-ip">(${s.server_ip})</span>
-                    </div>
+                    <span class="server-name">Server ${serverId}</span>
                     <span class="badge ${statusClass}">${s.status}</span>
                 </div>
                 <div class="server-details">
-                    <div>Version: <span>${s.setup.public}</span></div>
-                    <div>Startzeit: <span>${s.server_start}</span></div>
-                    <div>SSL-Gültig bis: <span>${s.ssl.expire_date}</span></div>
-                    <div>Letztes Update: <span>${s.last_update}</span></div>
+                    <div>Version: <span>${publicVersion}</span></div>
+                    <div>Startzeit: <span>${serverStart}</span></div>
+                    <div>SSL-Gültig bis: <span>${expireDate}</span></div>
+                    <div>Letztes Update: <span>${lastUpdate}</span></div>
                 </div>
                 ${errorHtml}
             `;
@@ -265,7 +305,12 @@
         });
     }
 
-    document.addEventListener("DOMContentLoaded", renderPaddyStyle);
+    // Beim Laden der Seite sofort einmal abrufen
+    document.addEventListener("DOMContentLoaded", () => {
+        fetchServerData();
+        // Danach automatisch alle 60 Sekunden (60000 Millisekunden) aktualisieren
+        setInterval(fetchServerData, 60000);
+    });
 </script>
 
 </body>
