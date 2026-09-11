@@ -3,279 +3,269 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Server-Status Dashboard</title>
+    <title>Paddys Tool - Server Status</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #121212;
-            color: #fff;
+            color: #eee;
             margin: 0;
             padding: 20px;
         }
 
-        .server-dashboard-container {
-            max-width: 1200px;
+        .paddy-container {
+            max-width: 900px;
             margin: 0 auto;
-            background-color: #181818;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
-        }
-
-        .server-dashboard-container h2 {
-            margin-top: 0;
-            margin-bottom: 20px;
-            font-size: 1.6rem;
-            border-bottom: 2px solid #333;
-            padding-bottom: 10px;
-            color: #e0e0e0;
-        }
-
-        .server-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-        }
-
-        .server-card {
-            background: #212121;
+            background-color: #1a1a1a;
+            padding: 20px;
             border-radius: 8px;
-            padding: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            border: 1px solid #333;
+        }
+
+        .paddy-container h2 {
+            margin-top: 0;
+            font-size: 1.4rem;
+            border-bottom: 2px solid #444;
+            padding-bottom: 10px;
+            color: #fff;
+        }
+
+        .server-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .server-row {
+            background: #242424;
+            border-radius: 6px;
+            padding: 12px 15px;
             border-left: 5px solid #555;
-            transition: transform 0.2s ease, border-color 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
-        .server-card:hover {
-            transform: translateY(-3px);
-        }
-
-        /* Dynamische Rahmenfarben je nach Status */
-        .server-card.online {
+        /* Status-Farben für den linken Rand */
+        .server-row.online {
             border-left-color: #2ecc71; /* Grün */
         }
 
-        .server-card.offline {
+        .server-row.offline {
             border-left-color: #e74c3c; /* Rot */
         }
 
-        .server-card.restarting {
-            border-left-color: #f39c12; /* Orange für Neustart */
-        }
-
-        .server-header {
+        .server-top-info {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .server-name {
+            font-weight: bold;
             font-size: 1.1rem;
+            color: #fff;
+        }
+
+        .server-ip {
+            color: #aaa;
+            font-family: monospace;
+            font-size: 0.95rem;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+            text-transform: uppercase;
             font-weight: bold;
         }
 
-        .status-badge {
-            font-size: 0.75rem;
-            padding: 4px 8px;
-            border-radius: 12px;
-            text-transform: uppercase;
-            font-weight: 600;
-        }
-
-        .status-badge.online {
+        .badge.online {
             background: rgba(46, 204, 113, 0.2);
             color: #2ecc71;
         }
 
-        .status-badge.offline {
+        .badge.offline {
             background: rgba(231, 76, 60, 0.2);
             color: #e74c3c;
         }
 
-        .status-badge.restarting {
-            background: rgba(243, 156, 18, 0.2);
-            color: #f39c12;
+        .server-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 6px;
+            font-size: 0.85rem;
+            color: #bbb;
+            border-top: 1px solid #333;
+            padding-top: 6px;
         }
 
-        .server-info {
-            font-size: 0.9rem;
-            color: #aaa;
-            margin-bottom: 6px;
-        }
-
-        .server-info span {
+        .server-details span {
             color: #fff;
-            font-weight: 500;
         }
 
-        .server-messages {
-            margin-top: 12px;
-            background: rgba(231, 76, 60, 0.1);
-            border: 1px solid rgba(231, 76, 60, 0.3);
-            padding: 8px;
+        .server-error-box {
+            background: rgba(231, 76, 60, 0.15);
+            border: 1px solid rgba(231, 76, 60, 0.4);
+            padding: 6px 10px;
             border-radius: 4px;
             font-size: 0.85rem;
             color: #ff8787;
+            margin-top: 4px;
         }
 
-        .server-messages ul {
-            margin: 4px 0 0 15px;
+        .server-error-box ul {
+            margin: 2px 0 0 15px;
             padding: 0;
-        }
-
-        .update-time {
-            font-size: 0.75rem;
-            color: #666;
-            margin-top: 10px;
-            border-top: 1px solid #333;
-            padding-top: 6px;
         }
     </style>
 </head>
 <body>
 
-<div class="server-dashboard-container">
-    <h2>Server-Statusübersicht</h2>
-    <div id="server-grid" class="server-grid">
-        <!-- Server-Karten werden per JavaScript generiert -->
+<div class="paddy-container">
+    <h2>Server Status (Paddys Tool Stil)</h2>
+    <div id="server-list" class="server-list">
+        <!-- Server werden hier per JavaScript untereinander eingefügt -->
     </div>
 </div>
 
 <script>
-    // Alle Server komplett zusammengefasst aus deinen Daten (1 bis 8 inklusive 2b)
+    // Server-Daten (komplett von Server 1 bis 8 inklusive 2b)
     const serverData = [
         {
             server: "1",
-            server_ip: null,
-            server_start: null,
+            server_ip: "Nicht zugewiesen",
+            server_start: "Ke Angaben",
             status: "Außer Betrieb",
-            message: [],
-            setup: { public: null, internal: null },
-            ssl: { status: null },
-            last_update: "23-06-2026 13:39:08 +0200"
+            messages: [],
+            setup: { public: "N/A" },
+            ssl: { status: "Keine", expire_date: "N/A" },
+            last_update: "23-06-2026 13:39"
         },
         {
             server: "2b",
-            server_ip: null,
-            server_start: null,
+            server_ip: "Nicht zugewiesen",
+            server_start: "Keine Angabe",
             status: "Außer Betrieb",
-            message: [],
-            setup: { public: null, internal: null },
-            ssl: { status: null },
-            last_update: "23-06-2026 13:39:08 +0200"
+            messages: [],
+            setup: { public: "N/A" },
+            ssl: { status: "Keine", expire_date: "N/A" },
+            last_update: "23-06-2026 13:39"
         },
         {
             server: "3",
             server_ip: "80.255.8.196",
-            server_start: "10-09-2026 04:00:01 +0200",
+            server_start: "10-09-2026 04:00:01",
             status: "Betriebsbereit",
-            message: [],
-            setup: { public: "lautcast/2.8.9", internal: "lautcast/2.8.9" },
-            ssl: { status: "valid" },
-            last_update: "10-09-2026 21:57:06 +0200"
+            messages: [],
+            setup: { public: "lautcast/2.8.9" },
+            ssl: { status: "valid", expire_date: "09-10-2026 13:51" },
+            last_update: "10-09-2026 21:57"
         },
         {
             server: "4",
             server_ip: "80.255.8.197",
-            server_start: "10-09-2026 04:00:01 +0200",
+            server_start: "10-09-2026 04:00:01",
             status: "Betriebsbereit",
-            message: [],
-            setup: { public: "lautcast/2.8.9", internal: "lautcast/2.8.9" },
-            ssl: { status: "valid" },
-            last_update: "10-09-2026 21:57:06 +0200"
+            messages: [],
+            setup: { public: "lautcast/2.8.9" },
+            ssl: { status: "valid", expire_date: "09-10-2026 13:51" },
+            last_update: "10-09-2026 21:57"
         },
         {
             server: "5",
-            server_ip: "80.255.8.198", // Beispiel-IP basierend auf der Reihe
-            server_start: "10-09-2026 04:00:01 +0200",
+            server_ip: "80.255.8.198",
+            server_start: "10-09-2026 04:00:01",
             status: "Betriebsbereit",
-            message: [],
-            setup: { public: "lautcast/2.8.9", internal: "lautcast/2.8.9" },
-            ssl: { status: "valid" },
-            last_update: "10-09-2026 21:57:06 +0200"
+            messages: [],
+            setup: { public: "lautcast/2.8.9" },
+            ssl: { status: "valid", expire_date: "09-10-2026 13:51" },
+            last_update: "10-09-2026 21:57"
         },
         {
             server: "6",
             server_ip: "80.255.8.199",
-            server_start: "10-09-2026 04:00:01 +0200",
+            server_start: "10-09-2026 04:00:01",
             status: "Außer Betrieb",
-            message: [
+            messages: [
                 "Komplett Ausfall des Servers",
                 "Server seit mindestens 24 Stunden ohne Lebenszeichen"
             ],
-            setup: { public: "lautcast/2.8.9", internal: "lautcast/2.8.9" },
-            ssl: { status: "valid" },
-            last_update: "10-09-2026 21:57:06 +0200"
+            setup: { public: "lautcast/2.8.9" },
+            ssl: { status: "valid", expire_date: "09-10-2026 13:51" },
+            last_update: "10-09-2026 21:57"
         },
         {
             server: "7",
             server_ip: "80.255.8.200",
-            server_start: "10-09-2026 04:00:01 +0200",
+            server_start: "10-09-2026 04:00:01",
             status: "Betriebsbereit",
-            message: [],
-            setup: { public: "lautcast/2.8.9", internal: "lautcast/2.8.9" },
-            ssl: { status: "valid" },
-            last_update: "10-09-2026 21:57:06 +0200"
+            messages: [],
+            setup: { public: "lautcast/2.8.9" },
+            ssl: { status: "valid", expire_date: "09-10-2026 13:51" },
+            last_update: "10-09-2026 21:57"
         },
         {
             server: "8",
             server_ip: "80.255.8.200",
-            server_start: "10-09-2026 04:00:01 +0200",
+            server_start: "10-09-2026 04:00:01",
             status: "Betriebsbereit",
-            message: [],
-            setup: { public: "lautcast/2.8.9", internal: "lautcast/2.8.9" },
-            ssl: { status: "valid" },
-            last_update: "10-09-2026 21:57:06 +0200"
+            messages: [],
+            setup: { public: "lautcast/2.8.9" },
+            ssl: { status: "valid", expire_date: "09-10-2026 13:51" },
+            last_update: "10-09-2026 21:57"
         }
     ];
 
-    function renderServerDashboard() {
-        const grid = document.getElementById('server-grid');
-        grid.innerHTML = '';
+    function renderPaddyStyle() {
+        const listContainer = document.getElementById('server-list');
+        listContainer.innerHTML = '';
 
         serverData.forEach(s => {
-            // Automatische Erkennung für Neustart (z.B. wenn um 4 Uhr nachts der Startzeitpunkt greift oder frisch initialisiert wird)
-            let statusText = s.status;
-            let statusClass = "offline";
+            const isOnline = s.status === "Betriebsbereit";
+            const statusClass = isOnline ? "online" : "offline";
 
-            if (s.status === "Betriebsbereit") {
-                statusClass = "online";
-            } else {
-                // Prüfen ob es sich um einen aktiven Neustart/Startvorgang handeln könnte (z.B. Server Startzeit aktuell)
-                statusClass = "offline";
-            }
-
-            // Falls eine spezifische Nachricht bezüglich Ausfall oder Neustart vorliegt
-            let messageHtml = '';
-            if (s.message && s.message.length > 0) {
-                messageHtml = `
-                    <div class="server-messages">
-                        <strong>Hinweis:</strong>
+            // Fehlerbox generieren, falls vorhanden
+            let errorHtml = '';
+            if (s.messages && s.messages.length > 0) {
+                errorHtml = `
+                    <div class="server-error-box">
+                        <strong>Fehlermeldung:</strong>
                         <ul>
-                            ${s.message.map(msg => `<li>${msg}</li>`).join('')}
+                            ${s.messages.map(m => `<li>${m}</li>`).join('')}
                         </ul>
                     </div>
                 `;
             }
 
-            const card = document.createElement('div');
-            card.className = `server-card ${statusClass}`;
-            card.innerHTML = `
-                <div class="server-header">
-                    <span>Server ${s.server}</span>
-                    <span class="status-badge ${statusClass}">${statusText}</span>
+            const row = document.createElement('div');
+            row.className = `server-row ${statusClass}`;
+            row.innerHTML = `
+                <div class="server-top-info">
+                    <div>
+                        <span class="server-name">Server ${s.server}</span>
+                        <span class="server-ip">(${s.server_ip})</span>
+                    </div>
+                    <span class="badge ${statusClass}">${s.status}</span>
                 </div>
-                <div class="server-info">IP: <span>${s.server_ip || 'Nicht zugewiesen'}</span></div>
-                <div class="server-info">Startzeit: <span>${s.server_start || 'Keine'}</span></div>
-                <div class="server-info">Version: <span>${s.setup && s.setup.public ? s.setup.public : 'N/A'}</span></div>
-                <div class="server-info">SSL: <span>${s.ssl && s.ssl.status ? s.ssl.status : 'Keine'}</span></div>
-                ${messageHtml}
-                <div class="update-time">Letztes Update: ${s.last_update || 'N/A'}</div>
+                <div class="server-details">
+                    <div>Version: <span>${s.setup.public}</span></div>
+                    <div>Startzeit: <span>${s.server_start}</span></div>
+                    <div>SSL-Gültig bis: <span>${s.ssl.expire_date}</span></div>
+                    <div>Letztes Update: <span>${s.last_update}</span></div>
+                </div>
+                ${errorHtml}
             `;
-            grid.appendChild(card);
+            listContainer.appendChild(row);
         });
     }
 
-    // Beim Laden der Seite ausführen
-    document.addEventListener("DOMContentLoaded", renderServerDashboard);
+    document.addEventListener("DOMContentLoaded", renderPaddyStyle);
 </script>
 
 </body>
